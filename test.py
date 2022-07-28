@@ -5,7 +5,7 @@ import jittor as jt
 from omegaconf import OmegaConf
 from tqdm import tqdm
 
-from model_jittor.dataset import InferenceDataset
+from model_jittor.data.landscape import InferenceDataset
 from model_jittor.ldm.ddim import DDIMSampler
 from model_jittor.ldm.ddpm import LatentDiffusion
 from utils import to_pil_image

@@ -8,7 +8,7 @@ import jittor as jt
 from omegaconf import OmegaConf
 
 import wandb
-from model_jittor.dataset import get_ldm_dataloader
+from model_jittor.data.landscape import get_ldm_dataloader
 from model_jittor.ldm.ddpm import LatentDiffusion
 from utils import make_grid, save_checkpoint, toggle_to_train, toggle_to_eval
 

@@ -8,7 +8,7 @@ import jittor.nn as nn
 from omegaconf import OmegaConf
 
 import wandb
-from model_jittor.dataset import get_vq_dataloader
+from model_jittor.data.landscape import get_vq_dataloader
 from model_jittor.autoencoder.vqgan import VQModel
 from model_jittor.autoencoder.loss import (
     NLayerDiscriminator, 
