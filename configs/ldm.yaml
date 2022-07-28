@@ -1,0 +1,79 @@
+project: ldm
+name: ddpm
+
+jittor:
+  use_cuda: true
+  amp_level: 0 #TODO: support amp
+  seed: 66
+
+lr: 0.00001
+resume: null
+start_epoch: 0
+epochs: 501
+print_freq: 20 # print and log every i iteration (batch)
+save_dir: null
+save_freq: 5 # save ckpt # save last and best
+save_wandb_image_freq: 100
+sample_freq: 5
+
+model:
+  beta_schedule: linear # use cosine
+  timesteps: 1000 
+  linear_start: 0.0015
+  linear_end: 0.0205
+  loss_type: l1
+  log_every_t: 100
+  image_size: 64 
+  channels: 6
+  use_ema: false ###
+  ckpt_path: null ###
+  # ckpt_path: /nas/wang/champ/save/run-20220713_043806-1i0hl4bo/checkpoints/last.ckpt
+  clip_denoised: true
+  unet_config: 
+    image_size: 64 
+    in_channels: 12
+    out_channels: 6
+    model_channels: 64
+    attention_resolutions:
+    - 32
+    - 16
+    - 8
+    num_res_blocks: 2
+    channel_mult:
+    - 1
+    - 4
+    - 8
+    num_heads: 8
+  first_stage_config:
+    embed_dim: 6
+    n_embed: 512 ###
+    ckpt_path: ./save/run-20220726_071933-2bf3e45o/checkpoints/epoch_60.ckpt
+    ddconfig:
+      double_z: false
+      z_channels: 6
+      resolution: 256
+      in_channels: 3
+      out_ch: 3
+      ch: 64
+      ch_mult:
+      - 1
+      - 2
+      - 4
+      num_res_blocks: 2
+      attn_resolutions: []
+      dropout: 0.0
+  cond_stage_config:
+    n_stages: 2
+    in_channels: 29
+    out_channels: 6 # if mask acc is low, consider increase this
+
+data:
+  image_root: '/nas/datasets/landscape/train_val/images'
+  segmentation_root: '/nas/datasets/landscape/train_val/labels'
+  train_val_split_ratio: 0.95
+  train_val_split_seed: 42
+  batch_size: 12
+  num_workers: 4
+  n_labels: 29
+  image_size: [256, 256] # [height, width]
+  crop_ratio: 1.3
