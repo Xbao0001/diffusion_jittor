@@ -8,3 +8,4 @@ Pillow==9.2.0
 pyrsistent==0.18.1
 tqdm==4.64.0
 wandb==0.12.20
+einops==0.4.1
