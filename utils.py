@@ -76,65 +76,12 @@ def make_grid(images: Union[np.ndarray, jt.Var], n_cols=4):
     return grid
 
 
-def convert_to_negetive_one_positive_one(x: np.ndarray, **kwargs):
-    """[0, 255] -> [-1, 1] """
-    return x / 127.5 - 1.0
-
-
-def to_onehot(x: np.ndarray, n_labels=29, **kwargs):
-    return np.eye(n_labels)[x]
-
-
 def to_pil_image(x: Union[np.ndarray, jt.Var]):
     if isinstance(x, jt.Var): x = x.data
     assert x.ndim == 3, "only support C H W or H W C, where C = 3"
     if x.shape[0] == 3: x = x.transpose(1, 2, 0) # C H W -> H W C
     return Image.fromarray(np.uint8(x * 255), 'RGB')
 
-
-class ToVar(BasicTransform):
-    """Convert image and mask to `torch.Tensor`. The numpy `HWC` image is converted to pytorch `CHW` tensor.
-    If the image is in `HW` format (grayscale image), it will be converted to pytorch `HW` tensor.
-    This is a simplified and improved version of the old `ToTensor`
-    transform (`ToTensor` was deprecated, and now it is not present in Albumentations. You should use `ToTensorV2`
-    instead).
-    Args:
-        transpose_mask (bool): if True and an input mask has three dimensions, this transform will transpose dimensions
-        so the shape `[height, width, num_channels]` becomes `[num_channels, height, width]`. The latter format is a
-        standard format for PyTorch Tensors. Default: False.
-    """
-
-    def __init__(self, transpose_mask=True, always_apply=True, p=1.0):
-        super(ToVar, self).__init__(always_apply=always_apply, p=p)
-        self.transpose_mask = transpose_mask
-
-    @property
-    def targets(self):
-        return {"image": self.apply, "mask": self.apply_to_mask, "masks": self.apply_to_masks}
-
-    def apply(self, img, **params):  # skipcq: PYL-W0613
-        if len(img.shape) not in [2, 3]:
-            raise ValueError(
-                "Albumentations only supports images in HW or HWC format")
-
-        if len(img.shape) == 2:
-            img = np.expand_dims(img, 2)
-
-        return jt.array(img.transpose(2, 0, 1)).float32()
-
-    def apply_to_mask(self, mask, **params):  # skipcq: PYL-W0613
-        if self.transpose_mask and mask.ndim == 3:
-            mask = mask.transpose(2, 0, 1)
-        return jt.array(mask).float32()
-
-    def apply_to_masks(self, masks, **params):
-        return [self.apply_to_mask(mask, **params) for mask in masks]
-
-    def get_transform_init_args_names(self):
-        return ("transpose_mask",)
-
-    def get_params_dependent_on_targets(self, params):
-        return {}
 
 
 def trace_time(func):
