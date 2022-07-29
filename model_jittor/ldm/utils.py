@@ -15,7 +15,7 @@ def default(val, d):
     return d() if isfunction(d) else d
 
 
-def extract_into_tensor(a, t, x_shape):
+def extract(a, t, x_shape):
     b, *_ = t.shape
     out = a.gather(-1, t)
     return out.reshape(b, *((1,) * (len(x_shape) - 1)))
