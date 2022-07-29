@@ -91,30 +91,29 @@ class InferenceDataset(Dataset):
 
 
 def get_vq_dataloader( 
-    image_root: str, 
-    train_val_split_ratio: float,
-    train_val_split_seed: int,
-    batch_size: int, 
-    num_workers: int, 
-    image_size: int,
+    image_root='/nas/datasets/landscape/train_val/images', 
+    train_val_split_ratio=0.9,
+    train_val_split_seed=42,
+    batch_size=8, 
+    num_workers=2, 
+    image_size=(256, 256),
 ):
     train_images, val_images = train_val_split(
         image_root=image_root, 
         ratio=train_val_split_ratio, 
         seed=train_val_split_seed, 
     )
-    
+
+    height, width = image_size 
     train_transform = A.Compose([ 
-        A.RandomResizedCrop(height=image_size, width=image_size),
+        A.RandomResizedCrop(height=height, width=width),
         A.HorizontalFlip(p=0.5),
-        A.Lambda(image=convert_to_negetive_one_positive_one),
-        ToVar(),
+        A.Lambda(image=to_tensor),
     ])
     val_transform = A.Compose([
-        A.SmallestMaxSize(max_size=image_size),
-        A.RandomCrop(width=image_size, height=image_size),
-        A.Lambda(image=convert_to_negetive_one_positive_one),
-        ToVar(),
+        A.SmallestMaxSize(max_size=height),
+        A.RandomCrop(width=width, height=height),
+        A.Lambda(image=to_tensor),
     ])
 
     train_loader = VQDataset(
@@ -123,15 +122,15 @@ def get_vq_dataloader(
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
-        drop_last=False,
+        drop_last=True,
     )
     val_loader = VQDataset(
         image_root, val_images, val_transform
     ).set_attrs(
         batch_size=batch_size,
-        shuffle=True, # random sample some images for validating
+        shuffle=True, 
         num_workers=num_workers,
-        drop_last=False,
+        drop_last=True,
     )
     return train_loader, val_loader
 
@@ -145,32 +144,27 @@ def get_ldm_dataloader(
     batch_size=6,
     num_workers=2,
     n_labels=29,
-    image_size=256,
-    crop_ratio=1.4, # if fine tune, this can be smaller, such as 1.2
+    image_size=(256, 256),
 ):
-    assert crop_ratio >= 1.0
     
     train_images, val_images = train_val_split(
         image_root=image_root, 
         ratio=train_val_split_ratio, 
         seed=train_val_split_seed, 
     )
-    height, width = image_size 
 
+    height, width = image_size 
     train_transform = A.Compose([
-        A.SmallestMaxSize(max_size=int(crop_ratio * height)),
-        A.RandomCrop(width=width, height=height),
+        A.RandomResizedCrop(height=height, width=width),
         A.HorizontalFlip(p=0.5),
-        A.Lambda(image=convert_to_negetive_one_positive_one,
+        A.Lambda(image=to_tensor, 
                  mask=partial(to_onehot, n_labels=n_labels)),
-        ToVar(),
     ])
     val_transform = A.Compose([ # use 384x512 directly?
         A.SmallestMaxSize(max_size=height),
         A.RandomCrop(width=width, height=height),
-        A.Lambda(image=convert_to_negetive_one_positive_one,
+        A.Lambda(image=to_tensor,
                  mask=partial(to_onehot, n_labels=n_labels)),
-        ToVar(),
     ])
 
     train_dataloader = LDMDataset(
@@ -182,7 +176,7 @@ def get_ldm_dataloader(
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
-        drop_last=False,
+        drop_last=True,
     )
     val_dataloader = LDMDataset(
         image_root=image_root,
@@ -193,6 +187,6 @@ def get_ldm_dataloader(
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
-        drop_last=True, # set to True to avoid some bug
+        drop_last=True, 
     )
     return train_dataloader, val_dataloader
