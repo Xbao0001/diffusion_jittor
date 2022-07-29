@@ -1,16 +1,5 @@
-from collections import OrderedDict
 import jittor as jt
 import jittor.nn as nn
-
-
-class Example(nn.Module):
-    def __init__(self):
-        """input: (B, 5) output: (B, 10)"""
-        super().__init__()
-        self.linear = nn.Linear(5, 10)
-
-    def execute(self, x):
-        return self.linear(x)
 
 
 class Embedding(nn.Module):
