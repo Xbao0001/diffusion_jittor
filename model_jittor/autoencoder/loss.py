@@ -9,13 +9,10 @@ Classes to be Implemented:
 - [x] VQPecptualWithDiscriminator
 """
 
-from collections import namedtuple
 import functools
 import jittor as jt
 import jittor.nn as nn
 import jittor.models as models
-
-from torchvision.models import vgg16 as tvgg16
 
 from typing import Tuple
 
