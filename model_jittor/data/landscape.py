@@ -89,6 +89,7 @@ class InferenceDataset(Dataset):
         seg = seg.permute(0, 3, 1, 2).squeeze(0) 
         return seg, name
 
+
 def get_vq_dataloader( 
     image_root: str, 
     train_val_split_ratio: float,
@@ -137,8 +138,8 @@ def get_vq_dataloader(
     
 # TODO: add size support
 def get_ldm_dataloader(
-    image_root='/nas/landscape/train_val/images',
-    segmentation_root='/nas/landscape/train_val/labels',
+    image_root='/nas/datasets/landscape/train_val/images',
+    segmentation_root='/nas/datasets/landscape/train_val/labels',
     train_val_split_ratio=0.9,
     train_val_split_seed=42,
     batch_size=6,
