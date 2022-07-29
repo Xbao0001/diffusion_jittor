@@ -1,14 +1,4 @@
-"""
-@Author: Js2Hou 
-@github: https://github.com/Js2Hou 
-@Time: 2022/07/06 10:55:24
-@Description: 
-
-TODO: test
-
-"""
-
-
+import math
 from inspect import isfunction
 
 import numpy as np
@@ -25,40 +15,63 @@ def default(val, d):
     return d() if isfunction(d) else d
 
 
-# NOTE： 默认使用 linear, 可只实现 linear 部分
-# NOTE: 返回的是 numpy, 可用 np.linspace
-def make_beta_schedule(schedule, n_timestep, linear_start=1e-4, linear_end=2e-2, cosine_s=8e-3):
-    if schedule == "linear":
-        betas = (
-            np.linspace(linear_start ** 0.5, linear_end **
-                        0.5, n_timestep, dtype=np.float64) ** 2
-        )
-
-    elif schedule == "cosine":
-        timesteps = (
-            np.arange(n_timestep + 1, dtype=np.float64) / n_timestep + cosine_s
-        )
-        alphas = timesteps / (1 + cosine_s) * np.pi / 2
-        alphas = np.cos(alphas).pow(2)
-        alphas = alphas / alphas[0]
-        betas = 1 - alphas[1:] / alphas[:-1]
-        betas = np.clip(betas, a_min=0, a_max=0.999)
-
-    elif schedule == "sqrt_linear":
-        betas = np.linspace(linear_start, linear_end,
-                            n_timestep, dtype=np.float64)
-    elif schedule == "sqrt":
-        betas = np.linspace(linear_start, linear_end,
-                            n_timestep, dtype=np.float64) ** 0.5
-    else:
-        raise ValueError(f"schedule '{schedule}' unknown.")
-    return betas
-
-
 def extract_into_tensor(a, t, x_shape):
     b, *_ = t.shape
     out = a.gather(-1, t)
     return out.reshape(b, *((1,) * (len(x_shape) - 1)))
+
+
+def noise_like(shape, repeat=False):
+    def repeat_noise(): return jt.randn(
+        (1, *shape[1:])).repeat(shape[0], *((1,) * (len(shape) - 1)))
+
+    def noise(): return jt.randn(shape)
+    return repeat_noise() if repeat else noise()
+
+
+def make_beta_schedule(schedule, timesteps):
+    """
+    Get a pre-defined beta schedule for the given name.
+    The beta schedule library consists of beta schedules which remain similar
+    in the limit of num_diffusion_timesteps.
+    Beta schedules may be added, but should not be removed or changed once
+    they are committed to maintain backwards compatibility.
+    """
+    if schedule == "linear":
+        # Linear schedule from Ho et al, extended to work for any number of
+        # diffusion steps.
+        scale = 1000 / timesteps
+        beta_start = scale * 0.0001
+        beta_end = scale * 0.02
+        return np.linspace(
+            beta_start, beta_end, timesteps, dtype=np.float64
+        )
+    elif schedule == "cosine":
+        return betas_for_alpha_bar(
+            timesteps,
+            lambda t: math.cos((t + 0.008) / 1.008 * math.pi / 2) ** 2,
+        )
+    else:
+        raise NotImplementedError(f"unknown beta schedule: {schedule}")
+
+
+def betas_for_alpha_bar(num_diffusion_timesteps, alpha_bar, max_beta=0.999):
+    """
+    Create a beta schedule that discretizes the given alpha_t_bar function,
+    which defines the cumulative product of (1-beta) over time from t = [0,1].
+    :param num_diffusion_timesteps: the number of betas to produce.
+    :param alpha_bar: a lambda that takes an argument t from 0 to 1 and
+                      produces the cumulative product of (1-beta) up to that
+                      part of the diffusion process.
+    :param max_beta: the maximum beta to use; use values lower than 1 to
+                     prevent singularities.
+    """
+    betas = []
+    for i in range(num_diffusion_timesteps):
+        t1 = i / num_diffusion_timesteps
+        t2 = (i + 1) / num_diffusion_timesteps
+        betas.append(min(1 - alpha_bar(t2) / alpha_bar(t1), max_beta))
+    return np.array(betas)
 
 
 def make_ddim_timesteps(ddim_discr_method, num_ddim_timesteps, num_ddpm_timesteps, verbose=True):
@@ -95,11 +108,3 @@ def make_ddim_sampling_parameters(alphacums, ddim_timesteps, eta, verbose=True):
         print(f'For the chosen value of eta, which is {eta}, '
               f'this results in the following sigma_t schedule for ddim sampler {sigmas}')
     return sigmas, alphas, alphas_prev
-
-
-def noise_like(shape, repeat=False):
-    def repeat_noise(): return jt.randn(
-        (1, *shape[1:])).repeat(shape[0], *((1,) * (len(shape) - 1)))
-
-    def noise(): return jt.randn(shape)
-    return repeat_noise() if repeat else noise()
