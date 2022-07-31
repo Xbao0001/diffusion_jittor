@@ -49,7 +49,7 @@ class TimestepEmbedSequential(nn.Sequential, TimestepBlock):
     support it as an extra input.
     """
 
-    def execute(self, x, emb, context=None):
+    def execute(self, x, emb):
         for layer in self:
             if isinstance(layer, TimestepBlock):
                 x = layer(x, emb)
@@ -367,7 +367,7 @@ class UNetModel(nn.Module):
                                     increased efficiency.
     """
 
-    def __init__( # NOTE: already set the default values to match ldm_orig_256.yaml
+    def __init__( 
         self,
         image_size=64, # the image size in latent space is 64x64
         in_channels=6, # 3 + 3 = 6, (one hot 29-> 3) + (noise of 3 channels)
@@ -389,7 +389,6 @@ class UNetModel(nn.Module):
         resblock_updown=False,
         use_new_attention_order=False,
         use_spatial_transformer=False,    # custom transformer support
-        transformer_depth=1,              # custom transformer support
         context_dim=None,                 # custom transformer support
         n_embed=None,                     # custom support for prediction of discrete ids into codebook of first stage vq model
         legacy=True,
