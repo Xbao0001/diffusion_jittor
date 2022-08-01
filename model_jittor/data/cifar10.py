@@ -6,19 +6,10 @@ def get_cifar10_dataloader(
     batch_size=8, 
     num_workers=2, 
 ):
-    train_transform = transform.Compose([ 
-        transform.CenterCrop(),
-        transform.ToTensor(),
-    ])
-    val_transform = transform.Compose([
-        transform.CenterCrop(),
-        transform.ToTensor(),
-    ])
-
     train_loader = CIFAR10(
         root='/nas/datasets/cifar10_jittor',
         train=True,
-        transform=train_transform,
+        transform=transform.ToTensor(),
     ).set_attrs(
         batch_size=batch_size,
         shuffle=True,
@@ -28,7 +19,7 @@ def get_cifar10_dataloader(
     val_loader = CIFAR10(
         root='/nas/datasets/cifar10_jittor',
         train=False,
-        transform=val_transform,
+        transform=transform.ToTensor(),
     ).set_attrs(
         batch_size=batch_size,
         shuffle=True, 
@@ -36,3 +27,8 @@ def get_cifar10_dataloader(
         drop_last=True,
     )
     return train_loader, val_loader
+
+
+if __name__ == '__main__':
+    train_loader, val_loader = get_cifar10_dataloader(batch_size=16, num_workers=2)
+    print(len(train_loader), len(val_loader)) # 50000 10000 which do not take acount batch size
