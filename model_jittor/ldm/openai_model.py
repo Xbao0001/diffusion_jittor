@@ -610,7 +610,7 @@ class UNetModel(nn.Module):
             conv_nd(dims, model_channels, n_embed, 1),
         )
 
-    def execute(self, x, timesteps=None, context=None, y=None,**kwargs):
+    def execute(self, x, timesteps=None, y=None,**kwargs):
         """
         Apply the model to an input batch.
         :param x: an [N x C x ...] Tensor of inputs.
@@ -632,12 +632,12 @@ class UNetModel(nn.Module):
 
         h = x
         for module in self.input_blocks:
-            h = module(h, emb, context)
+            h = module(h, emb)
             hs.append(h)
-        h = self.middle_block(h, emb, context)
+        h = self.middle_block(h, emb)
         for module in self.output_blocks:
             h = jt.concat([h, hs.pop()], dim=1)
-            h = module(h, emb, context)
+            h = module(h, emb)
         if self.predict_codebook_ids:
             return self.id_predictor(h)
         else:
