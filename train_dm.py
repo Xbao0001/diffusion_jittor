@@ -29,8 +29,7 @@ def init_and_run(cfg):
         os.makedirs(cfg.save_dir, exist_ok=True)
         if cfg.wandb:
             config = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
-            log_dir = os.path.join(cfg.save_dir, 'wandb')
-            wandb.init(project=cfg.project, name=cfg.name, config=config, dir=log_dir)
+            wandb.init(project=cfg.project, name=cfg.name, config=config, dir=cfg.save_dir)
         cfg.save_dir = os.path.join(cfg.save_dir, 'checkpoints')
         os.makedirs(cfg.save_dir, exist_ok=True)
         print(f'Saving checkpoints in {cfg.save_dir}')
@@ -73,10 +72,10 @@ def main(cfg):
             if global_train_steps % cfg.print_freq == 0:
                 print(
                     f"epoch: {epoch:3d}\t", 
-                    f"iter: [{i:4d}/{len(train_loader)}]\t", 
+                    f"iter: [{i:4d}/{len(train_loader) // cfg.data.batch_size}]\t", # seems a bug from CIFAR10
                     f"loss {loss.item():7.3f}\t",                     
                 )
-                if jt.rank == 0: # TODO: warp wandb.log to master only
+                if jt.rank == 0 and cfg.wandb: 
                     wandb.log({
                         "train/epoch": epoch,
                         "train/iter": global_train_steps,
@@ -90,9 +89,9 @@ def main(cfg):
             model.eval()
             img_sample = model.ddim_sample(shape=(25, 3, 32, 32), sampling_steps=100)
 
-            if jt.rank == 0:
+            if jt.rank == 0 and cfg.wandb:
                 wandb.log({
-                    'generated': wandb.Image(make_grid(img_sample.data, n_cols=5)),
+                    'generated': wandb.Image(make_grid(img_sample.data[:25], n_cols=5)),
                     'original': wandb.Image(make_grid(img.data, n_cols=5)),
                 })
 
