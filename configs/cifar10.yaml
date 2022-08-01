@@ -1,0 +1,29 @@
+wandb:
+  enable: false
+  project: diffusion_cifar10
+  name: cifar10  
+
+diffusion:
+  beta_schedule: cosine 
+  timesteps: 1000 
+  image_size: 64 
+  channels: 3
+  loss_type: l1
+  objective: pred_noise # or pred_x0
+  # log_every_t: 100 
+  ckpt_path: null ###
+  clip_denoised: true
+  unet_config: 
+    image_size: 32
+    in_channels: 3
+    model_channels: 128
+    out_channels: 3
+    num_res_blocks: 3
+    attention_resolutions: []
+    dropout: 0.3
+    channel_mult:
+    - 1
+    - 2
+    - 4
+    - 8
+    num_heads: 1
