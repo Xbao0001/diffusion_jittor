@@ -1,7 +1,20 @@
-wandb:
-  enable: false
-  project: diffusion_cifar10
-  name: cifar10  
+project: diffusion 
+name: default
+wandb: false
+
+jittor:
+  use_cuda: true
+  seed: 66 
+
+lr: 0.00001
+resume: null
+start_epoch: 0
+epochs: 1001
+print_freq: 20 # print and log every i iteration (batch)
+save_wandb_image_freq: 100
+sample_freq: 5
+save_dir: ./save # save_dir is 'save_dir/name'
+save_freq: 5 # save ckpt
 
 diffusion:
   beta_schedule: cosine 
@@ -27,3 +40,7 @@ diffusion:
     - 4
     - 8
     num_heads: 1
+  
+data:
+  batch_size: 128
+  num_workers: 8

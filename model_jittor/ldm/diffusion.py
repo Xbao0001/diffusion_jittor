@@ -188,7 +188,8 @@ class GaussianDiffusion(nn.Module):
         return img
 
     @jt.no_grad()
-    def ddim_sample(self, shape, sampling_steps, eta=1., clip_denoised=True):
+    def ddim_sample(self, shape, sampling_steps, eta=1., clip_denoised=None):
+        clip_denoised = default(clip_denoised, self.clip_denoised)
         times = jt.linspace(0., self.num_timesteps,
                             steps=sampling_steps + 2)[:-1]
         times = list(reversed(times.int().tolist()))
