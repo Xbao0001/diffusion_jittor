@@ -7,9 +7,10 @@ def get_cifar10_dataloader(
     num_workers=2, 
 ):
     train_loader = CIFAR10(
-        root='/nas/datasets/cifar10_jittor',
+        root='/nas/datasets/cifar10',
         train=True,
         transform=transform.ToTensor(),
+        download=True, 
     ).set_attrs(
         batch_size=batch_size,
         shuffle=True,
@@ -17,9 +18,10 @@ def get_cifar10_dataloader(
         drop_last=True,
     )
     val_loader = CIFAR10(
-        root='/nas/datasets/cifar10_jittor',
+        root='/nas/datasets/cifar10',
         train=False,
         transform=transform.ToTensor(),
+        download=True, 
     ).set_attrs(
         batch_size=batch_size,
         shuffle=True, 
