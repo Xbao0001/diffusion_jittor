@@ -87,12 +87,12 @@ def main(cfg):
         # sample val set
         if epoch % cfg.sample_freq == 0: 
             model.eval()
-            img_sample = model.ddim_sample(shape=(25, 3, 32, 32), sampling_steps=100)
+            img_sample = model.ddim_sample(shape=(64, 3, 32, 32), sampling_steps=100)
 
             if jt.rank == 0 and cfg.wandb:
                 wandb.log({
-                    'generated': wandb.Image(make_grid(img_sample.data[:25], n_cols=5)),
-                    'original': wandb.Image(make_grid(img.data, n_cols=5)),
+                    'generated': wandb.Image(make_grid(img_sample.data, n_cols=8)),
+                    'original': wandb.Image(make_grid(img.data[:64], n_cols=8)),
                 })
 
         if epoch % cfg.save_freq == 0:
