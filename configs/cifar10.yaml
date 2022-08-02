@@ -6,18 +6,19 @@ jittor:
   use_cuda: true
   seed: 66 
 
-lr: 0.00001
+lr: 0.00005
 resume: null
 start_epoch: 0
 epochs: 1001
 print_freq: 20 # print and log every i iteration (batch)
 save_wandb_image_freq: 100
-sample_freq: 5
+sample_freq: 10
 save_dir: ./save # save_dir is 'save_dir/name'
-save_freq: 5 # save ckpt
+# save_dir: /opt/data/private/ckpts # save_dir is 'save_dir/name'
+save_freq: 20 # save ckpt
 
 diffusion:
-  beta_schedule: cosine 
+  beta_schedule: linear
   timesteps: 1000 
   image_size: 64 
   channels: 3
@@ -25,6 +26,7 @@ diffusion:
   objective: pred_noise # or pred_x0
   # log_every_t: 100 
   ckpt_path: null ###
+  use_ema: true
   clip_denoised: true
   unet_config: 
     image_size: 32
