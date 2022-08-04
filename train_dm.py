@@ -4,12 +4,13 @@ import time
 
 import hydra
 import jittor as jt
+import wandb
 from omegaconf import OmegaConf
 
-import wandb
 from model_jittor.data.cifar10 import get_cifar10_dataloader
 from model_jittor.ldm.diffusion import GaussianDiffusion
-from model_jittor.utils import make_grid, save_checkpoint
+from model_jittor.ldm.ema import EMAModel
+from model_jittor.utils import make_grid, save_checkpoint, to_save_or_not_to_save
 
 
 @hydra.main(version_base=None, config_path='configs', config_name='cifar10.yaml')
@@ -28,8 +29,10 @@ def init_and_run(cfg):
         cfg.save_dir = os.path.join(cfg.save_dir, cfg.name)
         os.makedirs(cfg.save_dir, exist_ok=True)
         if cfg.wandb:
-            config = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
-            wandb.init(project=cfg.project, name=cfg.name, config=config, dir=cfg.save_dir)
+            config = OmegaConf.to_container(
+                cfg, resolve=True, throw_on_missing=True)
+            wandb.init(project=cfg.project, name=cfg.name,
+                       config=config, dir=cfg.save_dir)
         cfg.save_dir = os.path.join(cfg.save_dir, 'checkpoints')
         os.makedirs(cfg.save_dir, exist_ok=True)
         print(f'Saving checkpoints in {cfg.save_dir}')
@@ -45,10 +48,11 @@ def main(cfg):
 
     # init model
     model = GaussianDiffusion(**cfg.diffusion)
+    ema_model = EMAModel(model.model)
 
     # configure optimizer TODO: try lr_scheduler
     optimizer = jt.optim.Adam(
-        list(model.model.parameters()), 
+        list(model.model.parameters()),
         lr=cfg.lr,
     )
 
@@ -60,6 +64,7 @@ def main(cfg):
         optimizer.load_state_dict(checkpoint['optimizer'])
         cfg.start_epoch = checkpoint['epoch'] + 1  # start from the next epoch
 
+    jt.sync_all()
     print('Start training, good luck!')
     for epoch in range(cfg.start_epoch, cfg.epochs):
         start_time = time.time()
@@ -71,23 +76,27 @@ def main(cfg):
             optimizer.step(loss)
 
             jt.sync_all()
+            ema_model.step()
+
             if global_train_steps % cfg.print_freq == 0:
                 print(
-                    f"epoch: {epoch:3d}\t", 
-                    f"iter: [{i:4d}/{len(train_loader) // cfg.data.batch_size}]\t", # seems a bug from CIFAR10
-                    f"loss {loss.item():7.3f}\t",                     
+                    f"epoch: {epoch:3d}\t",
+                    # seems a bug from CIFAR10
+                    f"iter: [{i:4d}/{len(train_loader) // cfg.data.batch_size}]\t",
+                    f"loss {loss.item():7.3f}\t",
                 )
-                if jt.rank == 0 and cfg.wandb: 
+                if jt.rank == 0 and cfg.wandb:
                     wandb.log({
                         "train/epoch": epoch,
                         "train/iter": global_train_steps,
                         "train/loss": loss.item(),
                     })
+
         train_time = time.time() - start_time
         print(f'Epoch {epoch:3d} training time: {train_time/60:.2f} min.')
-        
+
         # sample val set
-        if epoch % cfg.sample_freq == 0: 
+        if epoch % cfg.sample_freq == 0:
             if jt.rank == 0 and cfg.wandb:
                 model.eval()
                 img_sample = model.p_sample_loop(shape=(36, 3, 32, 32))
@@ -96,13 +105,14 @@ def main(cfg):
                     'original': wandb.Image(make_grid(img.data[:36], n_cols=6)),
                 })
 
-        jt.sync_all()
-        if epoch % cfg.save_freq == 0:
+        if to_save_or_not_to_save(epoch, cfg.epochs, cfg.save_freq):
             save_checkpoint({
                 'epoch': epoch,
+                'loss': loss.data,
                 'model': model.state_dict(),
+                'ema_model': ema_model.shadow,
                 'optimizer': optimizer.state_dict(),
-            }, save_dir=cfg.save_dir, filename=f"last.ckpt")
+            }, save_dir=cfg.save_dir, filename=f"epoch_{epoch}.ckpt")
 
 
 if __name__ == "__main__":
