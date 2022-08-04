@@ -3,11 +3,12 @@ from jittor.dataset import CIFAR10, CIFAR100
 
 
 def get_cifar10_dataloader( 
+    root='/nas/datasets/cifar10',
     batch_size=8, 
     num_workers=2, 
 ):
     train_loader = CIFAR10(
-        root='/nas/datasets/cifar10',
+        root=root,
         train=True,
         transform=transform.ToTensor(),
         download=True, 
@@ -18,7 +19,7 @@ def get_cifar10_dataloader(
         drop_last=True,
     )
     val_loader = CIFAR10(
-        root='/nas/datasets/cifar10',
+        root=root,
         train=False,
         transform=transform.ToTensor(),
         download=True, 
