@@ -14,7 +14,6 @@ print_freq: 20 # print and log every i iteration (batch)
 save_wandb_image_freq: 100
 sample_freq: 20
 save_dir: ./save # save_dir is 'save_dir/name'
-# save_dir: /opt/data/private/ckpts # save_dir is 'save_dir/name'
 save_freq: 50 # save ckpt
 
 diffusion:
@@ -25,8 +24,9 @@ diffusion:
   loss_type: l1
   objective: pred_noise # or pred_x0
   # log_every_t: 100 
-  ckpt_path: null # ./save/try2_add_sync_ddpm/checkpoints/epoch_930.ckpt
   use_ema: true
+  ckpt_path: null
+  load_ema_model: false ##
   clip_denoised: true
   unet_config: 
     image_size: 32
