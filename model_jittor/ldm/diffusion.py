@@ -42,6 +42,7 @@ class GaussianDiffusion(nn.Module):
         p2_loss_weight_gamma=0.,
         p2_loss_weight_k=1,
         use_ema=False,
+        load_ema_model=False,
         clip_denoised=True,
         unet_config=None,
         ckpt_path=None,
@@ -57,11 +58,13 @@ class GaussianDiffusion(nn.Module):
         self.p2_loss_weight_k = p2_loss_weight_k
         self.clip_denoised = clip_denoised
         self.use_ema = use_ema
+        self.load_ema_model = load_ema_model
         
         self.register_schedule(beta_schedule, timesteps)
 
         self.model = UNetModel(**unet_config)
         if self.use_ema:
+            print('Using ema')
             self.ema_model = EMAModel(self.model)
 
         if ckpt_path is not None:
@@ -69,7 +72,10 @@ class GaussianDiffusion(nn.Module):
             ckpt = jt.load(ckpt_path)
             if isinstance(ckpt, dict) and 'model' in ckpt.keys():
                 self.load_state_dict(ckpt['model'])
-                print(f"using checkpoint from epoch {ckpt['epoch']}")
+                if self.use_ema and self.load_ema_model:
+                    self.model.load_state_dict(ckpt['ema_model'])
+                    print('Loaded ema model')
+                print(f"Using checkpoint from epoch {ckpt['epoch']}")
             else:
                 self.load_state_dict(ckpt)
             print(f"Loaded  ckeckpoint from '{ckpt_path}'")
