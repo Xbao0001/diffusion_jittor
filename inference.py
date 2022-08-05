@@ -78,10 +78,13 @@ if __name__ == '__main__':
     cfg.diffusion.load_ema_model = args.ema
 
     jt.flags.use_cuda = True
+    if args.ema:
+        args.name = args.name + '_ema'
     if args.seed is not None:
         jt.set_global_seed(args.seed)
         args.name = args.name + '_seed_' + str(args.seed)
     args.output_path = os.path.join(args.output_path, args.name)
     os.makedirs(args.output_path, exist_ok=True)
+    print(f'Saving results in "{args.output_path}"')
 
     main(args, cfg)
