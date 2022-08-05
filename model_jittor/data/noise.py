@@ -8,6 +8,7 @@ class NoiseDataset(Dataset):
         self.image_size = image_size
         self.channel = channel
         self.set_attrs(total_len=length)
+        # TODO: init add noise here for better reproducibility
 
     def __getitem__(self, idx):
         return jt.randn(self.channel, self.image_size, self.image_size), idx
