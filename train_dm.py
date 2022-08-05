@@ -50,7 +50,7 @@ def main(cfg):
     model = GaussianDiffusion(**cfg.diffusion)
     ema_model = EMAModel(model.model)
 
-    # configure optimizer TODO: try lr_scheduler
+    # configure optimizer TODO: try lr_scheduler and different lr
     optimizer = jt.optim.Adam(
         list(model.model.parameters()),
         lr=cfg.lr,
