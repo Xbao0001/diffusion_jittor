@@ -42,7 +42,7 @@ def init_and_run(cfg):
 
 
 def main(cfg):
-    # TODO: add ema, before ema, remeber to sync
+    # TODO: try pred x_0
     # dataloader
     train_loader, _ = get_cifar10_dataloader(**cfg.data)
 
