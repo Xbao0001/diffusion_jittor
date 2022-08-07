@@ -113,7 +113,7 @@ def main(cfg):
                 img_sample = model.ddpm_sample(shape=(36, 3, 32, 32))
                 wandb.log({
                     'generated': wandb.Image(make_grid(img_sample.data, n_cols=6)),
-                    'original': wandb.Image(make_grid(img.data[:36], n_cols=6)),
+                    'original': wandb.Image(make_grid(img.data[:36], n_cols=6)), # potential bug here, if batch size < 36
                 })
 
         if to_save_or_not_to_save(epoch, cfg.epochs, cfg.save_freq):
