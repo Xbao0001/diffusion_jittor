@@ -20,6 +20,7 @@ class LinearWarmupCosineAnnealingLR(CosineAnnealingLR):
         super().__init__(optimizer, T_max, eta_min, last_epoch)
         self.warmup_epochs = warmup_epochs
         self.warmup_start_lr = warmup_start_lr
+        self.step() # set optimizer.lr to 0
     
     def get_lr(self, base_lr, now_lr):
         if self.last_epoch == 0:
