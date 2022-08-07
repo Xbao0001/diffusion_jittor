@@ -4,9 +4,9 @@ import time
 
 import hydra
 import jittor as jt
+import wandb
 from omegaconf import OmegaConf
 
-import wandb
 from model_jittor.data.cifar10 import get_cifar10_dataloader
 from model_jittor.ldm.diffusion import GaussianDiffusion
 from model_jittor.scheduler import LinearWarmupCosineAnnealingLR
@@ -66,9 +66,10 @@ def main(cfg):
     if cfg.resume is not None:
         assert os.path.isfile(cfg.resume)
         checkpoint = jt.load(cfg.resume)
-        model.load_state_dict(checkpoint['model'])
-        optimizer.load_state_dict(checkpoint['optimizer'])
         cfg.start_epoch = checkpoint['epoch'] + 1  # start from the next epoch
+        model.load_state_dict(checkpoint['model'])
+        model.ema_param_dict = checkpoint['ema_model']
+        optimizer.load_state_dict(checkpoint['optimizer'])
 
     print('Start training, good luck!')
     for epoch in range(cfg.start_epoch, cfg.epochs):
