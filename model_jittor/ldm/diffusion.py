@@ -34,7 +34,6 @@ class GaussianDiffusion(nn.Module):
     ):
         super().__init__()
 
-        self.channels = channels
         self.loss_type = loss_type
         assert objective in ['pred_noise', 'pred_x0']
         self.objective = objective
@@ -90,7 +89,6 @@ class GaussianDiffusion(nn.Module):
             print(f"Loaded  ckeckpoint from '{ckpt_path}'")
 
     def register_buffer(self, name, attr):
-        # TODO: print all params and check requires_grad
         if isinstance(attr, jt.Var):
             attr.stop_grad()
         setattr(self, name, attr)
@@ -189,19 +187,15 @@ class GaussianDiffusion(nn.Module):
 
     @jt.no_grad()
     def p_sample(self, x, t: int, clip_denoised: bool):
+        noise = jt.randn_like(x) if t > 0 else jt.zeros_like(x) # no noise if t == 0
         t = jt.full((x.shape[0],), t, dtype=jt.int64)  # NOTE: why 64?
         model_mean, _, model_log_variance = self.p_mean_variance(
             x=x, t=t, clip_denoised=clip_denoised)
-        noise = jt.randn_like(x) if t > 0 else 0.  # no noise if t == 0
         return model_mean + (0.5 * model_log_variance).exp() * noise
 
     @jt.no_grad()
     def ddpm_sample(self, shape=None, x_T=None, clip_denoised=None):
-        if x_T is not None:
-            shape = x_T.shape
-        else:
-            assert shape is not None
-            img = jt.randn(shape)
+        img = default(x_T, jt.randn(shape))
 
         clip_denoised = default(clip_denoised, self.clip_denoised)
 
@@ -219,14 +213,12 @@ class GaussianDiffusion(nn.Module):
         time_pairs = list(zip(times[:-1], times[1:]))
 
         img = default(x_T, jt.randn(shape))
-        assert not img.requires_grad  # TODO
 
         for time, time_next in tqdm(time_pairs, desc='DDIM sampling'):
             alpha = self.alphas_cumprod_prev[time]
             alpha_next = self.alphas_cumprod_prev[time_next]
 
-            time_cond = jt.full((shape[0],), time,
-                                dtype=jt.int64)  # NOTE: why 64
+            time_cond = jt.full((shape[0],), time, dtype=jt.int64)
 
             pred_noise, x_start = self.model_predictions(img, time_cond)
 
@@ -252,7 +244,7 @@ class GaussianDiffusion(nn.Module):
                 extract(self.sqrt_one_minus_alphas_cumprod, t, x_start.shape) * noise)
 
     def p_losses(self, x_start, t, noise=None):
-        noise = default(noise, jt.randn_like(x_start))
+        noise = default(noise, jt.randn_like(x_start)).stop_grad()
 
         x_noisy = self.q_sample(x_start=x_start, t=t, noise=noise)
         output = self.model(x_noisy, t)
@@ -317,7 +309,7 @@ class LatentDiffusion(GaussianDiffusion):
         return self.p_losses(img, seg, t, *args, **kwargs)
 
     def p_losses(self, x_start, cond, t, noise=None):
-        noise = default(noise, jt.randn_like(x_start))
+        noise = default(noise, jt.randn_like(x_start)).stop_grad()
         assert noise.requires_grad == False  # TODO: remove
         x_noisy = self.q_sample(x_start=x_start, t=t, noise=noise)
         output = self.model(x_noisy, t, cond)
@@ -361,11 +353,7 @@ class LatentDiffusion(GaussianDiffusion):
     @jt.no_grad()
     def ddpm_sample(self, cond, shape=None, x_T=None, clip_denoised=None,
                     quantize_denoised=False, ):
-        if x_T is not None:
-            shape = x_T.shape
-        else:
-            assert shape is not None
-            img = jt.randn(shape)
+        img = default(x_T, jt.randn(shape))
 
         clip_denoised = default(clip_denoised, self.clip_denoised)
 
@@ -376,14 +364,42 @@ class LatentDiffusion(GaussianDiffusion):
 
     @jt.no_grad()
     def ddim_sample(self, seg, shape, ddim_steps, eta=1., x_T=None, clip_denoised=None):
-        raise NotImplementedError()
+        clip_denoised = default(clip_denoised, self.clip_denoised)
+        times = jt.linspace(0., self.num_timesteps, steps=ddim_steps + 2)[:-1]
+        times = list(reversed(times.int().tolist()))
+        time_pairs = list(zip(times[:-1], times[1:]))
+
+        img = default(x_T, jt.randn(shape))
+
+        for time, time_next in tqdm(time_pairs, desc='DDIM sampling'):
+            alpha = self.alphas_cumprod_prev[time]
+            alpha_next = self.alphas_cumprod_prev[time_next]
+
+            t = jt.full((shape[0],), time, dtype=jt.int64)
+
+            pred_noise, x_start = self.model_predictions(img, t, seg)
+
+            if clip_denoised:
+                x_start = jt.clamp(x_start, -1., 1.)
+
+            sigma = eta * ((1 - alpha / alpha_next) *
+                           (1 - alpha_next) / (1 - alpha)).sqrt()
+            c = ((1 - alpha_next) - sigma ** 2).sqrt()
+
+            noise = jt.randn_like(img) if time_next > 0 else 0.
+
+            img = x_start * alpha_next.sqrt() + \
+                c * pred_noise + \
+                sigma * noise
+
+        return img
 
     @jt.no_grad()
     def p_sample(self, x, cond, t: int, clip_denoised=False, quantize_denoised=False):
+        noise = jt.randn_like(x) if t > 0 else 0.  # no noise if t == 0
         t = jt.full((x.shape[0],), t, dtype=jt.int64)
         model_mean, _, model_log_variance = self.p_mean_variance(
             x, cond, t, clip_denoised, quantize_denoised)
-        noise = jt.randn_like(x) if t > 0 else 0.  # no noise if t == 0
         return model_mean + (0.5 * model_log_variance).exp() * noise
 
     def p_mean_variance(self, x, cond, t, clip_denoised, quantize_denoised=False):
@@ -418,6 +434,7 @@ class LDMWrapper(nn.Module):
 
     def execute(self, x, t, seg):
         seg = self.spatial_rescale(seg)  # B 29 H W -> B C2 H//4 W//4
+        assert seg.shape[-2:] == x.shape[-2:]
         xc = jt.concat([x, seg], dim=1)
         out = self.diffusion_model(xc, t)
         return out
