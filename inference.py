@@ -40,7 +40,7 @@ def main(args, cfg):
             imgs = diffusion.ddim_sample(
                 noise.shape, args.steps, args.eta, noise)
         else:
-            imgs = diffusion.p_sample_loop(shape=noise.shape, x_T=noise)
+            imgs = diffusion.ddpm_sample(shape=noise.shape, x_T=noise)
 
         for img, idx in zip(imgs, ids):
             utils.to_pil_image(img).save(
