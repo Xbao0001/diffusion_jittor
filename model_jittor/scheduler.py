@@ -1,7 +1,8 @@
-import jittor as jt
-from jittor.optim import Optimizer
-from jittor.lr_scheduler import CosineAnnealingLR
 import math
+
+from jittor.lr_scheduler import CosineAnnealingLR
+from jittor.optim import Optimizer
+
 
 class LinearWarmupCosineAnnealingLR(CosineAnnealingLR):
     def __init__(self, 
