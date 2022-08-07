@@ -80,11 +80,11 @@ if __name__ == '__main__':
 
     name = os.path.split(args.ckpt_path)[-1].split('.')[0]
     print(name)
-    if args.ema:
-        name = name + '_ema'
     if args.seed is not None:
         jt.set_global_seed(args.seed)
         name = name + '_seed_' + str(args.seed)
+    if args.ema:
+        name = name + '_ema'
     args.output_path = os.path.join(args.output_path, name)
     os.makedirs(args.output_path, exist_ok=True)
     print(f'Saving results in "{args.output_path}"')
