@@ -51,7 +51,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, default='./configs/cifar10.yaml')
     parser.add_argument('--output_path', type=str, default='./results')
-    parser.add_argument('--name', type=str, default='default')
     parser.add_argument('--prefix', type=str, default='img')
 
     parser.add_argument('--num', type=int, default=50000,
@@ -72,18 +71,21 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=None)
 
     args = parser.parse_args()
+    
+    jt.flags.use_cuda = True
 
     cfg = OmegaConf.load(args.config)
     cfg.diffusion.ckpt_path = args.ckpt_path
     cfg.diffusion.load_ema_model = args.ema
 
-    jt.flags.use_cuda = True
+    name = os.path.split(args.ckpt_path)[-1].split('.')[0]
+    print(name)
     if args.ema:
-        args.name = args.name + '_ema'
+        name = name + '_ema'
     if args.seed is not None:
         jt.set_global_seed(args.seed)
-        args.name = args.name + '_seed_' + str(args.seed)
-    args.output_path = os.path.join(args.output_path, args.name)
+        name = name + '_seed_' + str(args.seed)
+    args.output_path = os.path.join(args.output_path, name)
     os.makedirs(args.output_path, exist_ok=True)
     print(f'Saving results in "{args.output_path}"')
 
