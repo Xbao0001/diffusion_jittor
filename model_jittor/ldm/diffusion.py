@@ -23,9 +23,6 @@ class GaussianDiffusion(nn.Module):
         loss_type='l1',
         objective='pred_noise',
         clip_denoised=True,
-        # p2 loss weight, from https://arxiv.org/abs/2204.00227 - 0 is equivalent to weight of 1 across time - 1. is recommended
-        p2_loss_weight_gamma=0.,
-        p2_loss_weight_k=1,
         unet_config=None,
         use_ema=False,
         decay=0.9999,  # used for ema
@@ -37,8 +34,6 @@ class GaussianDiffusion(nn.Module):
         self.loss_type = loss_type
         assert objective in ['pred_noise', 'pred_x0']
         self.objective = objective
-        self.p2_loss_weight_gamma = p2_loss_weight_gamma
-        self.p2_loss_weight_k = p2_loss_weight_k
         self.clip_denoised = clip_denoised
         self.use_ema = use_ema
         self.decay = decay
@@ -135,9 +130,6 @@ class GaussianDiffusion(nn.Module):
             betas * np.sqrt(alphas_cumprod_prev) / (1. - alphas_cumprod)))
         self.register_buffer('posterior_mean_coef2', to_var(
             (1. - alphas_cumprod_prev) * np.sqrt(alphas) / (1. - alphas_cumprod)))
-
-        self.register_buffer('p2_loss_weight', to_var((self.p2_loss_weight_k + alphas_cumprod /
-                                                       (1 - alphas_cumprod)) ** -self.p2_loss_weight_gamma))
 
     def predict_start_from_noise(self, x_t, t, noise):
         return (
@@ -261,7 +253,6 @@ class GaussianDiffusion(nn.Module):
             loss = (output - target).sqr()
         else:
             raise ValueError(f'invalid loss type {self.loss_type}')
-        loss = loss * extract(self.p2_loss_weight, t, loss.shape)
         return loss.mean()
 
     def execute(self, img, *args, **kwargs):
@@ -326,7 +317,6 @@ class LatentDiffusion(GaussianDiffusion):
             loss = (output - target).sqr()
         else:
             raise ValueError(f'invalid loss type {self.loss_type}')
-        loss = loss * extract(self.p2_loss_weight, t, loss.shape)
         return loss.mean()
 
     @jt.no_grad()
