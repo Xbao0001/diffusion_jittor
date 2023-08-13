@@ -8,6 +8,8 @@
 
 我队基于论文 *High-Resolution Image Synthesis with Latent Diffusion Models*，使用[Jittor](https://cg.cs.tsinghua.edu.cn/jittor/) 框架，参考 [latent-diffusion](https://github.com/CompVis/latent-diffusion)，实现了Latent Diffusion模型，并在比赛数据集上进行训练和调参，最终取得第十名。
 
+我主要实现了 train_*.py， inference.py 以及扩散模型部分。我队友主要负责UNet等具体模块的实现。我负责分工协调和汇总工作。
+
 ![](images/seg.png)
 ![](images/gen.png)
 
