@@ -10,6 +10,8 @@
 
 我主要实现了 train_*.py， inference.py 以及扩散模型部分。我队友主要负责UNet等具体模块的实现。我负责分工协调和汇总工作。
 
+代码中还使用了类似 [wandb](https://wandb.ai/home) 之类的实验工具，下面是实验中验证集上的结果（由wandb记录）。
+
 ![](images/seg.png)
 ![](images/gen.png)
 
