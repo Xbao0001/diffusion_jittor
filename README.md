@@ -6,7 +6,7 @@
 
 本仓库是[第二届计图人工智能挑战赛 - 风景图片生成赛道](https://www.educoder.net/competitions/index/Jittor-3)中我们队伍(jonelab)所采用的算法的代码实现。
 
-我队基于论文 *High-Resolution Image Synthesis with Latent Diffusion Models*，使用[Jittor](https://cg.cs.tsinghua.edu.cn/jittor/) 框架，参考 [latent-diffusion](https://github.com/CompVis/latent-diffusion)，实现了Latent Diffusion模型，并在比赛数据集上进行训练和调参，最终取得第十名。
+我队基于论文 *High-Resolution Image Synthesis with Latent Diffusion Models*，使用[Jittor](https://cg.cs.tsinghua.edu.cn/jittor/) 框架，参考 [latent-diffusion](https://github.com/CompVis/latent-diffusion)，实现了Latent Diffusion模型，并在比赛数据集上进行训练和调参，最终取得第十名。我们是最终入围队伍中唯一采用扩散模型的队伍，因为jittor开源社区中第一个扩散模型实现（根据当时github的搜索结果）。
 
 我主要实现了 train_*.py， inference.py 以及扩散模型部分。我队友主要负责UNet等具体模块的实现。我负责分工协调和汇总工作。
 
