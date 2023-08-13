@@ -6,7 +6,7 @@
 
 本仓库是[第二届计图人工智能挑战赛 - 风景图片生成赛道](https://www.educoder.net/competitions/index/Jittor-3)中我们队伍(jonelab)所采用的算法的代码实现。
 
-我队基于论文 *High-Resolution Image Synthesis with Latent Diffusion Models*，使用Jittor框架，参考 [latent-diffusion](https://github.com/CompVis/latent-diffusion)，实现了Latent Diffusion模型，并在比赛数据集上进行训练和调参，最终取得第十名。
+我队基于论文 *High-Resolution Image Synthesis with Latent Diffusion Models*，使用[Jittor](https://cg.cs.tsinghua.edu.cn/jittor/) 框架，参考 [latent-diffusion](https://github.com/CompVis/latent-diffusion)，实现了Latent Diffusion模型，并在比赛数据集上进行训练和调参，最终取得第十名。
 
 ![](images/seg.png)
 ![](images/gen.png)
